@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGE v2 — Grupo Energia</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<style>
+  :root {
+    --laranja:#C8670A;--laranja-l:#F4A244;--laranja-bg:#FEF3E8;
+    --dark:#0F172A;--dark2:#1E293B;--bg:#F4EFE6;--branco:#FFFFFF;
+    --cinza:#64748B;--borda:#E2DBD0;--texto:#1A1A1A;
+    --sidebar-w:232px;--radius:10px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--texto);min-height:100vh;}
+
+  /* ── LOGIN ── */
+  #tela-login{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--dark) 0%,var(--dark2) 60%,#2d1a06 100%);padding:24px;}
+  .login-card{background:var(--branco);border-radius:16px;padding:48px 40px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,.35);}
+  .login-logo{text-align:center;margin-bottom:32px;}
+  .login-logo img{height:56px;object-fit:contain;margin-bottom:8px;}
+  .login-logo .logo-text{font-size:22px;font-weight:700;color:var(--dark);display:flex;align-items:center;justify-content:center;gap:8px;}
+  .login-logo .logo-text span{color:var(--laranja);}
+  .login-logo .logo-sub{font-size:12px;color:var(--cinza);margin-top:4px;letter-spacing:.5px;text-transform:uppercase;}
+  .login-campo{margin-bottom:16px;}
+  .login-campo label{display:block;font-size:13px;font-weight:600;color:var(--dark);margin-bottom:6px;}
+  .login-campo input{width:100%;padding:10px 14px;border:1.5px solid var(--borda);border-radius:var(--radius);font-size:14px;color:var(--texto);background:var(--bg);transition:border .2s;outline:none;}
+  .login-campo input:focus{border-color:var(--laranja);background:var(--branco);}
+  .login-erro{color:#991B1B;font-size:13px;margin-bottom:12px;display:none;align-items:center;gap:6px;}
+  .login-erro.vis{display:flex;}
+  .btn-login{width:100%;padding:12px;background:var(--laranja);color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-weight:600;cursor:pointer;transition:background .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn-login:hover{background:#a5530a;}
+
+  /* ── APP ── */
+  #app{display:none;}
+  .layout{display:flex;min-height:100vh;}
+
+  /* ── SIDEBAR ── */
+  .sidebar{width:var(--sidebar-w);background:var(--dark);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+  .sidebar-header{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:12px;}
+  .sidebar-logo{height:32px;object-fit:contain;filter:brightness(0) invert(1);}
+  .sidebar-logo-text{display:flex;flex-direction:column;}
+  .s-title{font-size:14px;font-weight:700;}
+  .s-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;}
+  .sidebar-nav{flex:1;padding:12px 0;overflow-y:auto;}
+  .nav-section{padding:0 12px;margin-bottom:4px;}
+  .nav-section-title{font-size:10px;font-weight:600;color:rgba(255,255,255,.35);letter-spacing:.8px;text-transform:uppercase;padding:8px 8px 4px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:rgba(255,255,255,.65);font-size:14px;cursor:pointer;transition:all .15s;text-decoration:none;margin-bottom:2px;}
+  .nav-item:hover{background:rgba(255,255,255,.07);color:#fff;}
+  .nav-item.ativo{background:var(--laranja);color:#fff;}
+  .nav-item i{font-size:17px;flex-shrink:0;}
+  .sidebar-footer{padding:12px;border-top:1px solid rgba(255,255,255,.08);}
+  .user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,.05);}
+  .user-avatar{width:32px;height:32px;border-radius:50%;background:var(--laranja);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+  .u-nome{font-size:13px;font-weight:600;color:#fff;}
+  .u-perfil{font-size:11px;color:rgba(255,255,255,.4);}
+  .btn-sair{display:flex;align-items:center;gap:6px;margin-top:8px;padding:8px 12px;border-radius:8px;color:rgba(255,255,255,.5);font-size:13px;cursor:pointer;width:100%;background:none;border:none;transition:all .15s;}
+  .btn-sair:hover{background:rgba(255,255,255,.07);color:#fff;}
+
+  /* ── CONTEÚDO ── */
+  .conteudo{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;}
+  .topbar{background:var(--branco);border-bottom:1px solid var(--borda);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+  .topbar-titulo{font-size:16px;font-weight:600;color:var(--dark);}
+  .badge-perfil{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:var(--laranja-bg);color:var(--laranja);}
+  .pagina{padding:28px;flex:1;}
+
+  /* ── HUB ── */
+  .hub-boas-vindas{margin-bottom:28px;}
+  .hub-boas-vindas h1{font-size:22px;font-weight:700;color:var(--dark);}
+  .hub-boas-vindas p{color:var(--cinza);margin-top:4px;font-size:14px;}
+
+  /* ── KPIs ── */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:28px;}
+  .kpi{background:var(--branco);border-radius:var(--radius);padding:18px 20px;border:1px solid var(--borda);}
+  .kpi-valor{font-size:28px;font-weight:700;color:var(--dark);}
+  .kpi-label{font-size:12px;color:var(--cinza);margin-top:2px;}
+  .kpi-icon{font-size:20px;color:var(--laranja);margin-bottom:6px;}
+
+  /* ── CARDS DOS MÓDULOS ── */
+  .hub-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
+  .hub-card{background:var(--branco);border-radius:var(--radius);padding:24px;border:1.5px solid var(--borda);cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:12px;text-decoration:none;}
+  .hub-card:hover{border-color:var(--laranja);box-shadow:0 4px 16px rgba(200,103,10,.12);transform:translateY(-2px);}
+  .hub-card-icon{width:44px;height:44px;border-radius:10px;background:var(--laranja-bg);display:flex;align-items:center;justify-content:center;color:var(--laranja);font-size:22px;}
+  .hub-card h3{font-size:16px;font-weight:600;color:var(--dark);}
+  .hub-card p{font-size:13px;color:var(--cinza);line-height:1.5;}
+  .hub-card .hub-card-arrow{margin-top:auto;color:var(--laranja);font-size:18px;}
+
+  /* ── TABELAS (Colaboradores / Obras inline) ── */
+  .card-section{background:var(--branco);border-radius:var(--radius);border:1px solid var(--borda);overflow:hidden;margin-top:8px;}
+  .card-section-header{padding:14px 20px;border-bottom:1px solid var(--borda);display:flex;align-items:center;justify-content:space-between;}
+  .card-section-titulo{font-size:15px;font-weight:600;color:var(--dark);}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead tr{background:var(--dark);color:#fff;}
+  thead th{padding:10px 14px;text-align:left;font-weight:600;font-size:12px;letter-spacing:.3px;white-space:nowrap;}
+  tbody tr{border-top:1px solid var(--borda);}
+  tbody tr:hover{background:#FAF7F2;}
+  tbody tr:nth-child(even){background:var(--bg);}
+  tbody td{padding:9px 14px;vertical-align:middle;}
+  .td-nome{font-weight:500;color:var(--dark);}
+  .td-mono{font-family:monospace;font-size:12px;color:var(--cinza);}
+  .td-cinza{color:var(--cinza);}
+  .badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+  .badge-ativo{background:#DCFCE7;color:#166534;}
+  .badge-inativo{background:#FEE2E2;color:#991B1B;}
+  .badge-info{background:#DBEAFE;color:#1E40AF;}
+  .badge-aviso{background:#FEF9C3;color:#854D0E;}
+
+  /* BUSCA inline */
+  .input-busca{padding:7px 12px 7px 32px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;outline:none;background:var(--bg);width:200px;transition:border .2s;}
+  .input-busca:focus{border-color:var(--laranja);}
+  .busca-wrap{position:relative;display:inline-block;}
+  .busca-wrap i{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--cinza);font-size:14px;pointer-events:none;}
+
+  /* PÁGINAS */
+  .pagina-conteudo{display:none;}
+  .pagina-conteudo.ativa{display:block;}
+
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="tela-login">
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="assets/logo.png" alt="Grupo Energia" onerror="this.style.display='none';document.getElementById('login-logo-fallback').style.display='flex'">
+      <div id="login-logo-fallback" style="display:none;align-items:center;justify-content:center;gap:8px" class="logo-text">
+        <i class="ti ti-bolt" style="color:var(--laranja);font-size:26px"></i> SGE <span>v2</span>
+      </div>
+      <div class="logo-sub">Sistema de Gestão de Efetivos</div>
+    </div>
+    <div class="login-campo">
+      <label>Usuário</label>
+      <input type="text" id="input-usuario" placeholder="seu usuário" autocomplete="username">
+    </div>
+    <div class="login-campo">
+      <label>Senha</label>
+      <input type="password" id="input-senha" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <p class="login-erro" id="login-erro"><i class="ti ti-alert-circle"></i> Usuário ou senha incorretos.</p>
+    <button class="btn-login" onclick="fazerLogin()"><i class="ti ti-login"></i> Entrar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <img src="assets/logo.png" class="sidebar-logo" alt="GE" onerror="this.style.display='none';document.getElementById('sb-fallback').style.display='block'">
+        <i id="sb-fallback" class="ti ti-bolt" style="color:var(--laranja);font-size:26px;flex-shrink:0;display:none"></i>
+        <div class="sidebar-logo-text">
+          <div class="s-title">SGE v2</div>
+          <div class="s-sub">Grupo Energia</div>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">Principal</div>
+          <a class="nav-item ativo" id="nav-painel" onclick="irPara('painel',this)">
+            <i class="ti ti-layout-dashboard"></i> Painel
+          </a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Módulos</div>
+          <a class="nav-item" href="efetivos.html"><i class="ti ti-users"></i> Efetivos</a>
+          <a class="nav-item" href="alojamentos.html"><i class="ti ti-building"></i> Alojamentos</a>
+          <a class="nav-item" id="nav-ativos" href="ativos.html"><i class="ti ti-truck"></i> Ativos</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">Cadastros</div>
+          <a class="nav-item" id="nav-col" onclick="irPara('colaboradores',this)">
+            <i class="ti ti-id-badge"></i> Colaboradores
+          </a>
+          <a class="nav-item" id="nav-obras" onclick="irPara('obras',this)">
+            <i class="ti ti-building-skyscraper"></i> Obras
+          </a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <div class="user-avatar" id="user-avatar">MH</div>
+          <div>
+            <div class="u-nome" id="user-nome">—</div>
+            <div class="u-perfil" id="user-perfil">—</div>
+          </div>
+        </div>
+        <button class="btn-sair" onclick="Auth.logout()"><i class="ti ti-logout"></i> Sair</button>
+      </div>
+    </aside>
+
+    <!-- CONTEÚDO -->
+    <main class="conteudo">
+      <div class="topbar">
+        <span class="topbar-titulo" id="topbar-titulo">Painel</span>
+        <div style="display:flex;align-items:center;gap:12px">
+          <button onclick="recarregar()" style="display:flex;align-items:center;gap:6px;padding:7px 12px;border:1.5px solid var(--borda);border-radius:8px;background:var(--branco);font-size:13px;cursor:pointer;color:var(--cinza)">
+            <i class="ti ti-refresh"></i> Atualizar
+          </button>
+          <span class="badge-perfil" id="topbar-perfil">—</span>
+        </div>
+      </div>
+
+      <div class="pagina">
+
+        <!-- PAINEL -->
+        <div class="pagina-conteudo ativa" id="pag-painel">
+          <div class="hub-boas-vindas">
+            <h1 id="bv-titulo">Olá 👋</h1>
+            <p>Selecione um módulo para começar ou acompanhe o resumo abaixo.</p>
+          </div>
+          <div class="kpis">
+            <div class="kpi"><i class="ti ti-users kpi-icon"></i><div class="kpi-valor" id="kpi-col">—</div><div class="kpi-label">Colaboradores ativos</div></div>
+            <div class="kpi"><i class="ti ti-building-skyscraper kpi-icon"></i><div class="kpi-valor" id="kpi-obras">—</div><div class="kpi-label">Obras em andamento</div></div>
+            <div class="kpi"><i class="ti ti-hard-hat kpi-icon"></i><div class="kpi-valor" id="kpi-efet">—</div><div class="kpi-label">Efetivos alocados</div></div>
+            <div class="kpi"><i class="ti ti-building kpi-icon"></i><div class="kpi-valor" id="kpi-aloj">—</div><div class="kpi-label">Alojamentos ativos</div></div>
+          </div>
+          <div class="hub-cards">
+            <a class="hub-card" href="efetivos.html">
+              <div class="hub-card-icon"><i class="ti ti-users"></i></div>
+              <h3>Efetivos</h3>
+              <p>Gerencie a alocação de colaboradores por obra, etapa e função.</p>
+              <i class="ti ti-arrow-right hub-card-arrow"></i>
+            </a>
+            <a class="hub-card" href="alojamentos.html">
+              <div class="hub-card-icon"><i class="ti ti-building"></i></div>
+              <h3>Alojamentos</h3>
+              <p>Controle de quartos, unidades e vínculos com colaboradores.</p>
+              <i class="ti ti-arrow-right hub-card-arrow"></i>
+            </a>
+            <a class="hub-card" id="card-ativos" href="ativos.html">
+              <div class="hub-card-icon"><i class="ti ti-truck"></i></div>
+              <h3>Ativos</h3>
+              <p>Veículos e equipamentos alocados por obra e responsável.</p>
+              <i class="ti ti-arrow-right hub-card-arrow"></i>
+            </a>
+            <a class="hub-card" onclick="irPara('colaboradores', document.getElementById('nav-col'))">
+              <div class="hub-card-icon"><i class="ti ti-id-badge"></i></div>
+              <h3>Colaboradores</h3>
+              <p>Cadastro central de colaboradores e status de cada um.</p>
+              <i class="ti ti-arrow-right hub-card-arrow"></i>
+            </a>
+            <a class="hub-card" onclick="irPara('obras', document.getElementById('nav-obras'))">
+              <div class="hub-card-icon"><i class="ti ti-building-skyscraper"></i></div>
+              <h3>Obras</h3>
+              <p>Cadastro e acompanhamento de obras e status de execução.</p>
+              <i class="ti ti-arrow-right hub-card-arrow"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- COLABORADORES -->
+        <div class="pagina-conteudo" id="pag-colaboradores">
+          <div class="card-section">
+            <div class="card-section-header">
+              <span class="card-section-titulo">Colaboradores</span>
+              <div class="busca-wrap">
+                <i class="ti ti-search"></i>
+                <input class="input-busca" id="busca-col" placeholder="Buscar..." oninput="filtrarCol()">
+              </div>
+            </div>
+            <div id="tbody-col">
+              <div style="text-align:center;padding:40px;color:var(--cinza)">
+                <i class="ti ti-loader-2" style="font-size:24px;animation:spin 1s linear infinite"></i>
+                <p style="margin-top:10px;font-size:13px">Carregando...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OBRAS -->
+        <div class="pagina-conteudo" id="pag-obras">
+          <div class="card-section">
+            <div class="card-section-header">
+              <span class="card-section-titulo">Obras</span>
+            </div>
+            <div id="tbody-obras">
+              <div style="text-align:center;padding:40px;color:var(--cinza)">
+                <i class="ti ti-loader-2" style="font-size:24px;animation:spin 1s linear infinite"></i>
+                <p style="margin-top:10px;font-size:13px">Carregando...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+// ── Login ────────────────────────────────────────────────────
+function fazerLogin() {
+  const u = document.getElementById('input-usuario').value.trim();
+  const s = document.getElementById('input-senha').value;
+  const e = document.getElementById('login-erro');
+  if (Auth.login(u, s)) { e.classList.remove('vis'); iniciarApp(); }
+  else e.classList.add('vis');
+}
+['input-senha','input-usuario'].forEach(id =>
+  document.getElementById(id).addEventListener('keydown', ev => { if(ev.key==='Enter') fazerLogin(); })
+);
+
+// ── App ───────────────────────────────────────────────────────
+function iniciarApp() {
+  const s = Auth.getSessao(); if (!s) return;
+  document.getElementById('tela-login').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('user-nome').textContent    = s.nome;
+  document.getElementById('user-perfil').textContent  = s.perfil;
+  document.getElementById('user-avatar').textContent  = Fmt.iniciais(s.nome);
+  document.getElementById('topbar-perfil').textContent= s.perfil;
+  const hora = new Date().getHours();
+  const sd   = hora<12?'Bom dia':hora<18?'Boa tarde':'Boa noite';
+  document.getElementById('bv-titulo').textContent = `${sd}, ${s.nome.split(' ')[0]} 👋`;
+  if (s.perfil !== 'Administrador') {
+    document.getElementById('nav-ativos').style.display  = 'none';
+    document.getElementById('card-ativos').style.display = 'none';
+  }
+  carregarKPIs();
+}
+
+// ── Navegação ─────────────────────────────────────────────────
+const TITULOS = { painel:'Painel', colaboradores:'Colaboradores', obras:'Obras' };
+let _colCarregado = false, _obrasCarregado = false;
+
+function irPara(pag, navEl) {
+  document.querySelectorAll('.pagina-conteudo').forEach(p => p.classList.remove('ativa'));
+  document.getElementById('pag-'+pag).classList.add('ativa');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('ativo'));
+  if (navEl) navEl.classList.add('ativo');
+  document.getElementById('topbar-titulo').textContent = TITULOS[pag]||pag;
+  if (pag==='colaboradores' && !_colCarregado)  carregarColaboradores();
+  if (pag==='obras'         && !_obrasCarregado) carregarObras();
+}
+
+// ── KPIs ──────────────────────────────────────────────────────
+async function carregarKPIs() {
+  try {
+    const [cols,obras,efet,aloj] = await Promise.all([
+      Sheets.fetch(SGE.ABAS.COLABORADORES),
+      Sheets.fetch(SGE.ABAS.OBRAS),
+      Sheets.fetch(SGE.ABAS.EFETIVOS),
+      Sheets.fetch(SGE.ABAS.ALOJAMENTOS),
+    ]);
+    document.getElementById('kpi-col').textContent   = cols.filter(c=>c.STATUS==='Ativo').length;
+    document.getElementById('kpi-obras').textContent = obras.filter(o=>o.STATUS==='Aberto').length;
+    document.getElementById('kpi-efet').textContent  = efet.filter(e=>e.STATUS==='Ativo').length;
+    document.getElementById('kpi-aloj').textContent  = aloj.filter(a=>a.STATUS==='Ativo').length;
+  } catch(e){ console.warn('KPI error',e); }
+}
+
+async function recarregar() {
+  Sheets.limparCache();
+  _colCarregado = false; _obrasCarregado = false;
+  await carregarKPIs();
+  Toast.info('Dados atualizados.');
+}
+
+// ── Colaboradores ─────────────────────────────────────────────
+let _colaboradores = [];
+async function carregarColaboradores() {
+  const cont = document.getElementById('tbody-col');
+  _colaboradores = await Sheets.fetch(SGE.ABAS.COLABORADORES, true);
+  _colCarregado  = true;
+  renderColaboradores(_colaboradores);
+}
+
+function renderColaboradores(dados) {
+  const cont = document.getElementById('tbody-col');
+  if (!dados.length) { cont.innerHTML='<div style="text-align:center;padding:32px;color:var(--cinza)">Nenhum colaborador.</div>'; return; }
+  cont.innerHTML=`<div style="overflow-x:auto"><table>
+    <thead><tr><th>ID</th><th>Nome</th><th>Função</th><th>Empresa</th><th style="text-align:center">Status</th><th>Admissão</th></tr></thead>
+    <tbody>${dados.map((c,i)=>`<tr>
+      <td class="td-mono">${c.ID}</td>
+      <td class="td-nome">${c.NOME}</td>
+      <td class="td-cinza">${c.FUNCAO||'—'}</td>
+      <td class="td-cinza">${c.EMPRESA||'—'}</td>
+      <td style="text-align:center">${Fmt.statusBadge(c.STATUS)}</td>
+      <td class="td-cinza">${Fmt.data(c.DATA_ADMISSAO)}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>
+  <div style="padding:9px 14px;font-size:12px;color:var(--cinza);border-top:1px solid var(--borda)">${dados.length} colaboradores</div>`;
+}
+
+function filtrarCol() {
+  const b = document.getElementById('busca-col').value.toLowerCase();
+  renderColaboradores(_colaboradores.filter(c => !b || c.NOME.toLowerCase().includes(b) || (c.FUNCAO||'').toLowerCase().includes(b)));
+}
+
+// ── Obras ─────────────────────────────────────────────────────
+async function carregarObras() {
+  const obras = await Sheets.fetch(SGE.ABAS.OBRAS, true);
+  _obrasCarregado = true;
+  const cont = document.getElementById('tbody-obras');
+  if (!obras.length) { cont.innerHTML='<div style="text-align:center;padding:32px;color:var(--cinza)">Nenhuma obra.</div>'; return; }
+  cont.innerHTML=`<div style="overflow-x:auto"><table>
+    <thead><tr><th>ID</th><th>Nome</th><th>Cidade</th><th style="text-align:center">Status</th><th>Início</th><th>Prev. Fim</th><th>Encarregado</th></tr></thead>
+    <tbody>${obras.map(o=>`<tr>
+      <td class="td-mono">${o.ID}</td>
+      <td class="td-nome">${o.NOME}</td>
+      <td class="td-cinza">${o.CIDADE||'—'}</td>
+      <td style="text-align:center">${Fmt.statusBadge(o.STATUS)}</td>
+      <td class="td-cinza">${Fmt.data(o.DATA_INICIO)}</td>
+      <td class="td-cinza">${Fmt.data(o.DATA_PREV_FIM)}</td>
+      <td class="td-cinza">${o.ENCARREGADO||'—'}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>
+  <div style="padding:9px 14px;font-size:12px;color:var(--cinza);border-top:1px solid var(--borda)">${obras.length} obras</div>`;
+}
+
+// ── Boot ──────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  if (Auth.getSessao()) {
+    iniciarApp();
+    // Verifica se veio de outro módulo com destino específico
+    const goto = sessionStorage.getItem('sge_goto');
+    if (goto) {
+      sessionStorage.removeItem('sge_goto');
+      const navEl = document.getElementById('nav-' + (goto === 'colaboradores' ? 'col' : goto));
+      setTimeout(() => irPara(goto, navEl), 100);
+    }
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alojamentos — SGE v2</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<style>
+  :root {
+    --laranja:#C8670A;--laranja-l:#F4A244;--laranja-bg:#FEF3E8;
+    --dark:#0F172A;--dark2:#1E293B;--bg:#F4EFE6;--branco:#FFFFFF;
+    --cinza:#64748B;--borda:#E2DBD0;--texto:#1A1A1A;
+    --sidebar-w:232px;--radius:10px;
+    --danger:#991B1B;--danger-bg:#FEE2E2;
+    --success:#166534;--success-bg:#DCFCE7;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--texto);min-height:100vh;}
+  .layout{display:flex;min-height:100vh;}
+
+  /* SIDEBAR */
+  .sidebar{width:var(--sidebar-w);background:var(--dark);color:#fff;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+  .sidebar-header{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:12px;}
+  .s-title{font-size:14px;font-weight:700;}.s-sub{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;}
+  .sidebar-nav{flex:1;padding:12px 0;}
+  .nav-section{padding:0 12px;margin-bottom:4px;}
+  .nav-section-title{font-size:10px;font-weight:600;color:rgba(255,255,255,.35);letter-spacing:.8px;text-transform:uppercase;padding:8px 8px 4px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;color:rgba(255,255,255,.65);font-size:14px;cursor:pointer;transition:all .15s;text-decoration:none;margin-bottom:2px;}
+  .nav-item:hover{background:rgba(255,255,255,.07);color:#fff;}
+  .nav-item.ativo{background:var(--laranja);color:#fff;}
+  .nav-item i{font-size:17px;flex-shrink:0;}
+  .sidebar-footer{padding:12px;border-top:1px solid rgba(255,255,255,.08);}
+  .user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,.05);}
+  .user-avatar{width:32px;height:32px;border-radius:50%;background:var(--laranja);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+  .u-nome{font-size:13px;font-weight:600;color:#fff;}.u-perfil{font-size:11px;color:rgba(255,255,255,.4);}
+  .btn-sair{display:flex;align-items:center;gap:6px;margin-top:8px;padding:8px 12px;border-radius:8px;color:rgba(255,255,255,.5);font-size:13px;cursor:pointer;width:100%;background:none;border:none;transition:all .15s;}
+  .btn-sair:hover{background:rgba(255,255,255,.07);color:#fff;}
+
+  /* CONTEÚDO */
+  .conteudo{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;}
+  .topbar{background:var(--branco);border-bottom:1px solid var(--borda);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+  .topbar-esq{display:flex;align-items:center;gap:8px;}
+  .topbar-titulo{font-size:16px;font-weight:600;color:var(--dark);}
+  .breadcrumb{font-size:13px;color:var(--cinza);}
+  .breadcrumb a{color:var(--laranja);text-decoration:none;}
+  .badge-perfil{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:var(--laranja-bg);color:var(--laranja);}
+  .pagina{padding:28px;flex:1;}
+
+  /* TOOLBAR */
+  .toolbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+  .toolbar-esq{display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap;}
+  .busca-wrap{position:relative;}
+  .busca-wrap i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--cinza);font-size:15px;pointer-events:none;}
+  .input-busca{padding:8px 14px 8px 36px;border:1.5px solid var(--borda);border-radius:var(--radius);font-size:13px;outline:none;background:var(--branco);width:240px;transition:border .2s;color:var(--texto);}
+  .input-busca:focus{border-color:var(--laranja);}
+  .select-filtro{padding:8px 12px;border:1.5px solid var(--borda);border-radius:var(--radius);font-size:13px;outline:none;background:var(--branco);color:var(--texto);cursor:pointer;transition:border .2s;}
+  .select-filtro:focus{border-color:var(--laranja);}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;}
+  .btn-primary{background:var(--laranja);color:#fff;}.btn-primary:hover{background:#a5530a;}
+  .btn-outline{background:var(--branco);color:var(--dark);border:1.5px solid var(--borda);}.btn-outline:hover{border-color:var(--laranja);color:var(--laranja);}
+  .btn-danger{background:var(--danger-bg);color:var(--danger);}.btn-danger:hover{background:#fca5a5;}
+
+  /* KPIs */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:24px;}
+  .kpi{background:var(--branco);border-radius:var(--radius);padding:16px 18px;border:1px solid var(--borda);}
+  .kpi-valor{font-size:26px;font-weight:700;color:var(--dark);}
+  .kpi-label{font-size:12px;color:var(--cinza);margin-top:2px;}
+  .kpi-icon{font-size:18px;color:var(--laranja);margin-bottom:6px;}
+
+  /* TABS VISUALIZAÇÃO */
+  .view-tabs{display:flex;gap:4px;background:var(--branco);border:1px solid var(--borda);border-radius:var(--radius);padding:4px;margin-bottom:20px;width:fit-content;}
+  .view-tab{padding:6px 14px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;color:var(--cinza);border:none;background:none;display:flex;align-items:center;gap:6px;transition:all .15s;}
+  .view-tab.ativo{background:var(--laranja);color:#fff;}
+
+  /* TABELA */
+  .tabela-wrap{background:var(--branco);border-radius:var(--radius);border:1px solid var(--borda);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead tr{background:var(--dark);color:#fff;}
+  thead th{padding:11px 14px;text-align:left;font-weight:600;font-size:12px;letter-spacing:.3px;white-space:nowrap;}
+  tbody tr{border-top:1px solid var(--borda);transition:background .1s;}
+  tbody tr:hover{background:#FAF7F2;}
+  tbody tr:nth-child(even){background:var(--bg);}
+  tbody tr:nth-child(even):hover{background:#F0EBE1;}
+  tbody td{padding:10px 14px;vertical-align:middle;}
+  .td-nome{font-weight:500;color:var(--dark);}
+  .td-mono{font-family:monospace;font-size:12px;color:var(--cinza);}
+  .td-cinza{color:var(--cinza);}
+
+  /* BADGES */
+  .badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;}
+  .badge-ativo{background:var(--success-bg);color:var(--success);}
+  .badge-inativo{background:var(--danger-bg);color:var(--danger);}
+  .badge-info{background:#DBEAFE;color:#1E40AF;}
+  .badge-aviso{background:#FEF9C3;color:#854D0E;}
+
+  /* CARDS DE QUARTOS */
+  .quartos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+  .quarto-card{background:var(--branco);border-radius:var(--radius);border:1.5px solid var(--borda);overflow:hidden;transition:all .2s;}
+  .quarto-card:hover{border-color:var(--laranja);box-shadow:0 4px 16px rgba(200,103,10,.1);}
+  .quarto-header{padding:14px 16px;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:space-between;}
+  .quarto-id{font-size:15px;font-weight:700;}
+  .quarto-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;}
+  .quarto-ocupacao{display:flex;align-items:center;gap:6px;}
+  .ocup-badge{padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+  .ocup-livre{background:var(--success-bg);color:var(--success);}
+  .ocup-parcial{background:#FEF9C3;color:#854D0E;}
+  .ocup-cheio{background:var(--danger-bg);color:var(--danger);}
+  .quarto-ocupantes{padding:12px 16px;}
+  .ocupante{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--borda);}
+  .ocupante:last-child{border-bottom:none;}
+  .ocup-avatar{width:28px;height:28px;border-radius:50%;background:var(--laranja-bg);color:var(--laranja);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+  .ocup-nome{font-size:13px;font-weight:500;color:var(--dark);}
+  .ocup-data{font-size:11px;color:var(--cinza);}
+  .quarto-vazio{padding:16px;text-align:center;color:var(--cinza);font-size:13px;}
+
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-bg.aberto{display:flex;}
+  .modal{background:var(--branco);border-radius:14px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.25);animation:modalIn .2s ease;}
+  @keyframes modalIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--borda);display:flex;align-items:center;justify-content:space-between;}
+  .modal-titulo{font-size:16px;font-weight:700;color:var(--dark);}
+  .modal-fechar{background:none;border:none;cursor:pointer;color:var(--cinza);font-size:20px;padding:4px;border-radius:6px;transition:all .15s;}
+  .modal-fechar:hover{background:var(--bg);color:var(--dark);}
+  .modal-body{padding:24px;}
+  .modal-footer{padding:16px 24px;border-top:1px solid var(--borda);display:flex;justify-content:flex-end;gap:10px;}
+
+  /* FORM */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .campo{display:flex;flex-direction:column;gap:5px;}
+  .campo.span2{grid-column:span 2;}
+  .campo label{font-size:12px;font-weight:600;color:var(--dark);}
+  .campo input,.campo select,.campo textarea{padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;color:var(--texto);background:var(--bg);outline:none;transition:border .2s;font-family:inherit;}
+  .campo input:focus,.campo select:focus,.campo textarea:focus{border-color:var(--laranja);background:var(--branco);}
+  .campo textarea{resize:vertical;min-height:72px;}
+  .campo .hint{font-size:11px;color:var(--cinza);}
+
+  /* ALERTA INATIVO */
+  .alerta-inativo{background:#FEF9C3;border:1.5px solid #FCD34D;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400E;display:none;align-items:center;gap:8px;margin-top:4px;}
+  .alerta-inativo.visivel{display:flex;}
+
+  /* DETALHE */
+  .detalhe-row{display:flex;gap:6px;margin-bottom:8px;font-size:13px;}
+  .detalhe-label{font-weight:600;color:var(--dark);min-width:130px;flex-shrink:0;}
+  .detalhe-val{color:var(--cinza);}
+
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <i class="ti ti-bolt" style="color:var(--laranja);font-size:26px;flex-shrink:0"></i>
+      <div><div class="s-title">SGE v2</div><div class="s-sub">Grupo Energia</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Principal</div>
+        <a class="nav-item" href="index.html"><i class="ti ti-layout-dashboard"></i> Painel</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Módulos</div>
+        <a class="nav-item" href="efetivos.html"><i class="ti ti-users"></i> Efetivos</a>
+        <a class="nav-item ativo" href="alojamentos.html"><i class="ti ti-building"></i> Alojamentos</a>
+        <a class="nav-item" id="nav-ativos" href="ativos.html"><i class="ti ti-truck"></i> Ativos</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Cadastros</div>
+        <a class="nav-item" href="index.html" onclick="sessionStorage.setItem('sge_goto','colaboradores')"><i class="ti ti-id-badge"></i> Colaboradores</a>
+        <a class="nav-item" href="index.html" onclick="sessionStorage.setItem('sge_goto','obras')"><i class="ti ti-building-skyscraper"></i> Obras</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="user-avatar">--</div>
+        <div><div class="u-nome" id="user-nome">—</div><div class="u-perfil" id="user-perfil">—</div></div>
+      </div>
+      <button class="btn-sair" onclick="Auth.logout()"><i class="ti ti-logout"></i> Sair</button>
+    </div>
+  </aside>
+
+  <!-- CONTEÚDO -->
+  <main class="conteudo">
+    <div class="topbar">
+      <div class="topbar-esq">
+        <span class="breadcrumb"><a href="index.html">Painel</a> /</span>
+        <span class="topbar-titulo">Alojamentos</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="btn btn-outline" onclick="recarregar()"><i class="ti ti-refresh"></i> Atualizar</button>
+        <span class="badge-perfil" id="topbar-perfil">—</span>
+      </div>
+    </div>
+
+    <div class="pagina">
+
+      <!-- KPIs -->
+      <div class="kpis">
+        <div class="kpi"><i class="ti ti-building kpi-icon"></i><div class="kpi-valor" id="kpi-quartos">—</div><div class="kpi-label">Quartos ocupados</div></div>
+        <div class="kpi"><i class="ti ti-users kpi-icon"></i><div class="kpi-valor" id="kpi-ocup">—</div><div class="kpi-label">Ocupantes ativos</div></div>
+        <div class="kpi"><i class="ti ti-home kpi-icon"></i><div class="kpi-valor" id="kpi-unidades">—</div><div class="kpi-label">Unidades / Blocos</div></div>
+        <div class="kpi"><i class="ti ti-user-off kpi-icon" style="color:#D97706"></i><div class="kpi-valor" id="kpi-inativos" style="color:#D97706">—</div><div class="kpi-label">Saídas registradas</div></div>
+      </div>
+
+      <!-- Tabs de visualização -->
+      <div class="view-tabs">
+        <button class="view-tab ativo" id="tab-lista" onclick="setView('lista')"><i class="ti ti-list"></i> Lista</button>
+        <button class="view-tab" id="tab-quartos" onclick="setView('quartos')"><i class="ti ti-layout-grid"></i> Por Quarto</button>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="toolbar-esq">
+          <div class="busca-wrap">
+            <i class="ti ti-search"></i>
+            <input class="input-busca" id="busca" placeholder="Buscar colaborador ou quarto..." oninput="filtrar()">
+          </div>
+          <select class="select-filtro" id="filtro-unidade" onchange="filtrar()"><option value="">Todas as unidades</option></select>
+          <select class="select-filtro" id="filtro-status" onchange="filtrar()">
+            <option value="">Todos os status</option>
+            <option value="Ativo">Ativo</option>
+            <option value="Inativo">Inativo</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="btn-novo" onclick="abrirModalNovo()">
+          <i class="ti ti-plus"></i> Nova Hospedagem
+        </button>
+      </div>
+
+      <!-- Conteúdo dinâmico -->
+      <div id="conteudo-view">
+        <div style="text-align:center;padding:48px;color:var(--cinza)">
+          <i class="ti ti-loader-2" style="font-size:28px;animation:spin 1s linear infinite"></i>
+          <p style="margin-top:12px">Carregando alojamentos...</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- MODAL HOSPEDAGEM -->
+<div class="modal-bg" id="modal-bg" onclick="fecharModalSeFora(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-titulo" id="modal-titulo">Nova Hospedagem</span>
+      <button class="modal-fechar" onclick="fecharModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="campo span2">
+          <label>Colaborador *</label>
+          <select id="f-colaborador" onchange="onColaboradorChange()">
+            <option value="">Selecione o colaborador...</option>
+          </select>
+          <div class="alerta-inativo" id="aviso-inativo">
+            <i class="ti ti-alert-triangle"></i>
+            <span>Este colaborador está inativo. Verifique no módulo de Colaboradores.</span>
+          </div>
+          <div class="alerta-inativo" id="aviso-ja-alojado" style="background:#DBEAFE;border-color:#93C5FD;color:#1E40AF;">
+            <i class="ti ti-info-circle"></i>
+            <span id="aviso-ja-alojado-txt">Este colaborador já possui alojamento ativo.</span>
+          </div>
+        </div>
+        <div class="campo">
+          <label>Unidade / Bloco *</label>
+          <input type="text" id="f-unidade" placeholder="ex: Bloco A, Unidade 1...">
+        </div>
+        <div class="campo">
+          <label>Quarto *</label>
+          <input type="text" id="f-quarto" placeholder="ex: 101, 202...">
+        </div>
+        <div class="campo">
+          <label>Data de Entrada *</label>
+          <input type="date" id="f-entrada">
+        </div>
+        <div class="campo">
+          <label>Data de Saída</label>
+          <input type="date" id="f-saida">
+          <span class="hint">Deixe em branco se ainda hospedado</span>
+        </div>
+        <div class="campo span2">
+          <label>Observações</label>
+          <textarea id="f-obs" placeholder="Informações adicionais..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar" onclick="salvar()">
+        <i class="ti ti-check"></i> Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALHES -->
+<div class="modal-bg" id="modal-detalhe-bg" onclick="fecharDetalhe(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-titulo">Detalhes da Hospedagem</span>
+      <button class="modal-fechar" onclick="fecharDetalhe()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body" id="modal-detalhe-body"></div>
+    <div class="modal-footer" id="modal-detalhe-footer"></div>
+  </div>
+</div>
+
+<script>
+let _alojamentos   = [];
+let _colaboradores = [];
+let _todosColabs   = []; // inclui inativos para lookup de nome
+let _viewAtual     = 'lista';
+let _modoEdicao    = null;
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const s = Auth.exigirLogin();
+  if (!s) return;
+  document.getElementById('user-nome').textContent    = s.nome;
+  document.getElementById('user-perfil').textContent  = s.perfil;
+  document.getElementById('user-avatar').textContent  = Fmt.iniciais(s.nome);
+  document.getElementById('topbar-perfil').textContent= s.perfil;
+  if (s.perfil !== 'Administrador') {
+    document.getElementById('btn-novo').style.display   = 'none';
+    document.getElementById('nav-ativos').style.display = 'none';
+  }
+  await carregarTudo();
+});
+
+async function carregarTudo() {
+  document.getElementById('conteudo-view').innerHTML = `
+    <div style="text-align:center;padding:48px;color:var(--cinza)">
+      <i class="ti ti-loader-2" style="font-size:28px;animation:spin 1s linear infinite"></i>
+      <p style="margin-top:12px">Carregando alojamentos...</p></div>`;
+
+  const [aloj, cols] = await Promise.all([
+    Sheets.fetch(SGE.ABAS.ALOJAMENTOS, true),
+    Sheets.fetch(SGE.ABAS.COLABORADORES, true),
+  ]);
+
+  _alojamentos   = aloj;
+  _todosColabs   = cols;
+  _colaboradores = cols.filter(c => c.STATUS === 'Ativo');
+
+  popularFiltroUnidade();
+  popularSelectColaborador();
+  atualizarKPIs();
+  renderView(_alojamentos);
+}
+
+async function recarregar() {
+  Sheets.limparCache();
+  await carregarTudo();
+  Toast.info('Dados atualizados.');
+}
+
+// ── KPIs ──────────────────────────────────────────────────────
+function atualizarKPIs() {
+  const ativos    = _alojamentos.filter(a => a.STATUS === 'Ativo');
+  const inativos  = _alojamentos.filter(a => a.STATUS === 'Inativo');
+  const quartos   = new Set(ativos.map(a => `${a.UNIDADE}-${a.QUARTO}`));
+  const unidades  = new Set(ativos.map(a => a.UNIDADE));
+  document.getElementById('kpi-quartos').textContent  = quartos.size;
+  document.getElementById('kpi-ocup').textContent     = ativos.length;
+  document.getElementById('kpi-unidades').textContent = unidades.size;
+  document.getElementById('kpi-inativos').textContent = inativos.length;
+}
+
+// ── Filtros ───────────────────────────────────────────────────
+function popularFiltroUnidade() {
+  const sel = document.getElementById('filtro-unidade');
+  sel.innerHTML = '<option value="">Todas as unidades</option>';
+  const unids = [...new Set(_alojamentos.map(a => a.UNIDADE).filter(Boolean))].sort();
+  unids.forEach(u => { const o = document.createElement('option'); o.value = u; o.textContent = u; sel.appendChild(o); });
+}
+
+function popularSelectColaborador() {
+  const sel = document.getElementById('f-colaborador');
+  sel.innerHTML = '<option value="">Selecione o colaborador...</option>';
+  _todosColabs.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.ID;
+    o.textContent = c.NOME + (c.STATUS === 'Inativo' ? ' (Inativo)' : '');
+    sel.appendChild(o);
+  });
+}
+
+function filtrar() {
+  const busca   = document.getElementById('busca').value.toLowerCase();
+  const unidade = document.getElementById('filtro-unidade').value;
+  const status  = document.getElementById('filtro-status').value;
+  const filtrados = _alojamentos.filter(a => {
+    const mb = !busca   || a.NOME_COLABORADOR.toLowerCase().includes(busca) || (a.QUARTO||'').toLowerCase().includes(busca) || (a.UNIDADE||'').toLowerCase().includes(busca);
+    const mu = !unidade || a.UNIDADE === unidade;
+    const ms = !status  || a.STATUS === status;
+    return mb && mu && ms;
+  });
+  renderView(filtrados);
+}
+
+// ── View toggle ───────────────────────────────────────────────
+function setView(v) {
+  _viewAtual = v;
+  document.getElementById('tab-lista').classList.toggle('ativo', v === 'lista');
+  document.getElementById('tab-quartos').classList.toggle('ativo', v === 'quartos');
+  filtrar();
+}
+
+function renderView(dados) {
+  _viewAtual === 'quartos' ? renderQuartos(dados) : renderLista(dados);
+}
+
+// ── Render Lista ──────────────────────────────────────────────
+function renderLista(dados) {
+  const cont = document.getElementById('conteudo-view');
+  if (!dados.length) {
+    cont.innerHTML = `<div class="tabela-wrap"><div style="text-align:center;padding:48px;color:var(--cinza)">
+      <i class="ti ti-inbox" style="font-size:36px;opacity:.4"></i>
+      <p style="margin-top:12px;font-size:15px;font-weight:500">Nenhum registro encontrado.</p></div></div>`;
+    return;
+  }
+  const isAdmin = Auth.isAdmin();
+  cont.innerHTML = `
+  <div class="tabela-wrap">
+  <table>
+    <thead><tr>
+      <th>Colaborador</th><th>Unidade</th><th>Quarto</th>
+      <th>Entrada</th><th>Saída</th>
+      <th style="text-align:center">Status</th>
+      <th style="text-align:center">Ações</th>
+    </tr></thead>
+    <tbody>
+      ${dados.map((a,i) => `<tr>
+        <td>
+          <div class="td-nome">${a.NOME_COLABORADOR}</div>
+          <div class="td-mono">${a.ID_COLABORADOR}</div>
+        </td>
+        <td class="td-cinza">${a.UNIDADE||'—'}</td>
+        <td><strong>${a.QUARTO||'—'}</strong></td>
+        <td class="td-cinza">${Fmt.data(a.DATA_ENTRADA)}</td>
+        <td class="td-cinza">${a.DATA_SAIDA ? Fmt.data(a.DATA_SAIDA) : '—'}</td>
+        <td style="text-align:center">${Fmt.statusBadge(a.STATUS)}</td>
+        <td style="text-align:center">
+          <div style="display:flex;gap:6px;justify-content:center">
+            <button class="btn btn-outline" style="padding:5px 8px" onclick="verDetalhe('${a.ID}')" title="Ver detalhes">
+              <i class="ti ti-eye" style="font-size:14px"></i>
+            </button>
+            ${isAdmin && a.STATUS === 'Ativo' ? `
+            <button class="btn btn-outline" style="padding:5px 8px" onclick="abrirModalEdicao('${a.ID}')" title="Editar">
+              <i class="ti ti-edit" style="font-size:14px"></i>
+            </button>
+            <button class="btn btn-danger" style="padding:5px 8px" onclick="registrarSaida('${a.ID}','${a.NOME_COLABORADOR}')" title="Registrar saída">
+              <i class="ti ti-door-exit" style="font-size:14px"></i>
+            </button>` : ''}
+          </div>
+        </td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+  <div style="padding:10px 14px;font-size:12px;color:var(--cinza);border-top:1px solid var(--borda)">
+    ${dados.length} registro${dados.length!==1?'s':''} exibido${dados.length!==1?'s':''}
+  </div></div>`;
+}
+
+// ── Render Quartos (cards) ────────────────────────────────────
+function renderQuartos(dados) {
+  const cont = document.getElementById('conteudo-view');
+  const ativos = dados.filter(a => a.STATUS === 'Ativo');
+
+  // Agrupa por Unidade > Quarto
+  const mapa = {};
+  ativos.forEach(a => {
+    const key = `${a.UNIDADE}||${a.QUARTO}`;
+    if (!mapa[key]) mapa[key] = { unidade: a.UNIDADE, quarto: a.QUARTO, ocupantes: [] };
+    mapa[key].ocupantes.push(a);
+  });
+
+  if (!Object.keys(mapa).length) {
+    cont.innerHTML = `<div style="text-align:center;padding:48px;color:var(--cinza)">
+      <i class="ti ti-inbox" style="font-size:36px;opacity:.4"></i>
+      <p style="margin-top:12px;font-size:15px;font-weight:500">Nenhum quarto ocupado encontrado.</p></div>`;
+    return;
+  }
+
+  const isAdmin = Auth.isAdmin();
+  const cards   = Object.values(mapa).sort((a,b) => a.unidade.localeCompare(b.unidade) || a.quarto.localeCompare(b.quarto));
+
+  cont.innerHTML = `<div class="quartos-grid">${cards.map(q => {
+    const n   = q.ocupantes.length;
+    const cls = n === 0 ? 'ocup-livre' : n === 1 ? 'ocup-parcial' : 'ocup-cheio';
+    const lbl = n === 0 ? 'Livre' : n === 1 ? '1 ocupante' : `${n} ocupantes`;
+    return `<div class="quarto-card">
+      <div class="quarto-header">
+        <div>
+          <div class="quarto-id"><i class="ti ti-door"></i> Quarto ${q.quarto}</div>
+          <div class="quarto-sub">${q.unidade}</div>
+        </div>
+        <span class="ocup-badge ${cls}">${lbl}</span>
+      </div>
+      <div class="quarto-ocupantes">
+        ${q.ocupantes.length ? q.ocupantes.map(o => `
+          <div class="ocupante">
+            <div class="ocup-avatar">${Fmt.iniciais(o.NOME_COLABORADOR)}</div>
+            <div>
+              <div class="ocup-nome">${o.NOME_COLABORADOR}</div>
+              <div class="ocup-data">Desde ${Fmt.data(o.DATA_ENTRADA)}</div>
+            </div>
+            ${isAdmin ? `<button class="btn btn-outline" style="margin-left:auto;padding:4px 7px" onclick="verDetalhe('${o.ID}')" title="Ver">
+              <i class="ti ti-eye" style="font-size:13px"></i></button>` : ''}
+          </div>`).join('') : '<div class="quarto-vazio"><i class="ti ti-zzz"></i> Quarto livre</div>'}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ── Modal ─────────────────────────────────────────────────────
+function abrirModalNovo() {
+  _modoEdicao = null;
+  document.getElementById('modal-titulo').textContent = 'Nova Hospedagem';
+  document.getElementById('btn-salvar').innerHTML     = '<i class="ti ti-check"></i> Salvar';
+  limparForm();
+  document.getElementById('modal-bg').classList.add('aberto');
+  document.getElementById('f-entrada').value = new Date().toISOString().split('T')[0];
+}
+
+function abrirModalEdicao(id) {
+  const a = _alojamentos.find(x => x.ID === id);
+  if (!a) return;
+  _modoEdicao = id;
+  document.getElementById('modal-titulo').textContent = 'Editar Hospedagem';
+  document.getElementById('btn-salvar').innerHTML     = '<i class="ti ti-check"></i> Salvar Alterações';
+  document.getElementById('f-colaborador').value = a.ID_COLABORADOR;
+  document.getElementById('f-unidade').value     = a.UNIDADE  || '';
+  document.getElementById('f-quarto').value      = a.QUARTO   || '';
+  document.getElementById('f-entrada').value     = a.DATA_ENTRADA || '';
+  document.getElementById('f-saida').value       = a.DATA_SAIDA   || '';
+  document.getElementById('f-obs').value         = a.OBS          || '';
+  document.getElementById('aviso-inativo').classList.remove('visivel');
+  document.getElementById('aviso-ja-alojado').classList.remove('visivel');
+  document.getElementById('modal-bg').classList.add('aberto');
+}
+
+function limparForm() {
+  ['f-colaborador','f-unidade','f-quarto','f-entrada','f-saida','f-obs'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('aviso-inativo').classList.remove('visivel');
+  document.getElementById('aviso-ja-alojado').classList.remove('visivel');
+}
+
+function fecharModal() { document.getElementById('modal-bg').classList.remove('aberto'); }
+function fecharModalSeFora(e) { if (e.target === document.getElementById('modal-bg')) fecharModal(); }
+
+// ── Validações inline no modal ────────────────────────────────
+function onColaboradorChange() {
+  const id   = document.getElementById('f-colaborador').value;
+  const avI  = document.getElementById('aviso-inativo');
+  const avA  = document.getElementById('aviso-ja-alojado');
+  const avAt = document.getElementById('aviso-ja-alojado-txt');
+  avI.classList.remove('visivel');
+  avA.classList.remove('visivel');
+  if (!id) return;
+
+  const col = _todosColabs.find(c => c.ID === id);
+  if (col && col.STATUS === 'Inativo') { avI.classList.add('visivel'); return; }
+
+  // Verifica se já está alojado ativamente
+  const jaAlojado = _alojamentos.find(a =>
+    a.ID_COLABORADOR === id && a.STATUS === 'Ativo' && a.ID !== _modoEdicao
+  );
+  if (jaAlojado) {
+    avAt.textContent = `Já hospedado em ${jaAlojado.UNIDADE} — Quarto ${jaAlojado.QUARTO}.`;
+    avA.classList.add('visivel');
+  }
+}
+
+// ── Salvar ────────────────────────────────────────────────────
+async function salvar() {
+  const idCol   = document.getElementById('f-colaborador').value;
+  const unidade = document.getElementById('f-unidade').value.trim();
+  const quarto  = document.getElementById('f-quarto').value.trim();
+  const entrada = document.getElementById('f-entrada').value;
+
+  if (!idCol || !unidade || !quarto || !entrada) {
+    Toast.aviso('Preencha os campos obrigatórios: Colaborador, Unidade, Quarto e Data de Entrada.');
+    return;
+  }
+
+  const col = _todosColabs.find(c => c.ID === idCol);
+  const btn = document.getElementById('btn-salvar');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Salvando...';
+
+  const novoId = _modoEdicao || ('ALO' + String(Date.now()).slice(-6));
+  const dados  = {
+    ID               : novoId,
+    ID_COLABORADOR   : idCol,
+    NOME_COLABORADOR : col ? col.NOME : '',
+    UNIDADE          : unidade,
+    QUARTO           : quarto,
+    DATA_ENTRADA     : entrada,
+    DATA_SAIDA       : document.getElementById('f-saida').value,
+    STATUS           : 'Ativo',
+    OBS              : document.getElementById('f-obs').value,
+  };
+
+  const payload = _modoEdicao
+    ? { acao: 'ATUALIZAR', aba: 'Alojamentos', id: _modoEdicao, dados }
+    : { acao: 'INSERIR',   aba: 'Alojamentos', dados };
+
+  const res = await GAS.post(payload);
+  btn.disabled = false;
+  btn.innerHTML = '<i class="ti ti-check"></i> Salvar';
+
+  if (res.ok) {
+    fecharModal();
+    Toast.sucesso(_modoEdicao ? 'Hospedagem atualizada!' : 'Hospedagem registrada!');
+    Sheets.limparCache();
+    await carregarTudo();
+  } else {
+    Toast.erro('Erro ao salvar: ' + (res.mensagem || 'Tente novamente.'));
+  }
+}
+
+// ── Registrar Saída ───────────────────────────────────────────
+function registrarSaida(id, nome) {
+  if (!confirm(`Registrar saída de "${nome}"?\nO alojamento será marcado como Inativo.`)) return;
+  _executarSaida(id, nome);
+}
+
+async function _executarSaida(id, nome) {
+  const hoje  = new Date().toISOString().split('T')[0];
+  const dados = { STATUS: 'Inativo', DATA_SAIDA: hoje };
+  const res   = await GAS.post({ acao: 'ATUALIZAR', aba: 'Alojamentos', id, dados });
+  if (res.ok) {
+    Toast.sucesso(`Saída de ${nome} registrada.`);
+    Sheets.limparCache();
+    await carregarTudo();
+  } else {
+    Toast.erro('Erro ao registrar saída: ' + (res.mensagem || ''));
+  }
+}
+
+// ── Ver Detalhes ──────────────────────────────────────────────
+function verDetalhe(id) {
+  const a = _alojamentos.find(x => x.ID === id);
+  if (!a) return;
+  const isAdmin = Auth.isAdmin();
+  document.getElementById('modal-detalhe-body').innerHTML = `
+    <div style="display:grid;gap:10px">
+      <div class="detalhe-row"><span class="detalhe-label">ID</span><span class="detalhe-val td-mono">${a.ID}</span></div>
+      <div class="detalhe-row"><span class="detalhe-label">Colaborador</span><span class="detalhe-val"><strong>${a.NOME_COLABORADOR}</strong> <span class="td-mono">(${a.ID_COLABORADOR})</span></span></div>
+      <div class="detalhe-row"><span class="detalhe-label">Unidade / Bloco</span><span class="detalhe-val">${a.UNIDADE||'—'}</span></div>
+      <div class="detalhe-row"><span class="detalhe-label">Quarto</span><span class="detalhe-val"><strong>${a.QUARTO||'—'}</strong></span></div>
+      <div class="detalhe-row"><span class="detalhe-label">Data de Entrada</span><span class="detalhe-val">${Fmt.data(a.DATA_ENTRADA)}</span></div>
+      <div class="detalhe-row"><span class="detalhe-label">Data de Saída</span><span class="detalhe-val">${a.DATA_SAIDA ? Fmt.data(a.DATA_SAIDA) : '—'}</span></div>
+      <div class="detalhe-row"><span class="detalhe-label">Status</span><span class="detalhe-val">${Fmt.statusBadge(a.STATUS)}</span></div>
+      ${a.OBS ? `<div class="detalhe-row"><span class="detalhe-label">Observações</span><span class="detalhe-val">${a.OBS}</span></div>` : ''}
+    </div>`;
+  document.getElementById('modal-detalhe-footer').innerHTML = isAdmin && a.STATUS === 'Ativo' ? `
+    <button class="btn btn-danger"  onclick="fecharDetalhe();registrarSaida('${a.ID}','${a.NOME_COLABORADOR}')"><i class="ti ti-door-exit"></i> Registrar Saída</button>
+    <button class="btn btn-primary" onclick="fecharDetalhe();abrirModalEdicao('${a.ID}')"><i class="ti ti-edit"></i> Editar</button>
+  ` : `<button class="btn btn-outline" onclick="fecharDetalhe()">Fechar</button>`;
+  document.getElementById('modal-detalhe-bg').classList.add('aberto');
+}
+function fecharDetalhe(e) {
+  if (e && e.target !== document.getElementById('modal-detalhe-bg')) return;
+  document.getElementById('modal-detalhe-bg').classList.remove('aberto');
+}
+</script>
+</body>
+</html>
